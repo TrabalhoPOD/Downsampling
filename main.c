@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     printf("Imagem original: %dx%d  canais=%d\n",
            original->largura, original->altura, original->canais);
 
-    /* ---- 3. Downsampling (Pessoa 2) ---- */
+    /* ---- 3. Downsampling (Espera ate o passo 2) ---- */
     Image *reduzida = downsample(original, fator);
     if (!reduzida)
     {
@@ -117,10 +117,10 @@ int main(int argc, char *argv[])
     escrever_imagem(caminho_compactado, reduzida);
     printf("Arquivo compactado salvo em: %s\n", caminho_compactado);
 
-    /* ---- 5. Taxa de compactação (Pessoa 4) ---- */
+    /* ---- 5. Taxa de compactação ---- */
     calcular_taxa(caminho_entrada, caminho_compactado);
 
-    /* ---- 6. Upsampling / reconstituição (Pessoa 3) ---- */
+    /* ---- 6. Upsampling / reconstituição ---- */
     Image *reconstituida = NULL;
 
     if (strcmp(metodo, "bilinear") == 0)
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     escrever_imagem(caminho_reconstituido, reconstituida);
     printf("Imagem reconstituida salva em: %s\n\n", caminho_reconstituido);
 
-    /* ---- 8. Métricas de qualidade (Pessoa 4) ---- */
+    /* ---- 8. Métricas de qualidade ---- */
     exibir_qualidade(original, reconstituida);
 
     /* ---- 9. Liberar memória ---- */
