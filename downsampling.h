@@ -43,6 +43,12 @@ void liberar_imagem(Image *img);
 Image *ler_imagem(const char *filename);
 void escrever_imagem(const char *filename, Image *img);
 
+// ============================================================
+// FUNÇÃO DE DOWNSAMPLING (Compactação) — aguardando o passo 2
+// Reduz a imagem aplicando média dos pixels em blocos NxN
+// ============================================================
+Image *downsample(Image *original, int fator);
+
 /*
 ============================================================================
 PARA O RELATÓRIO: ALGORITMOS DE RECONSTITUIÇÃO (Upsampling / Interpolação)
