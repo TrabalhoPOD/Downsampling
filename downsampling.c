@@ -207,3 +207,172 @@ void escrever_imagem(const char *filename, Image *img)
 
     fclose(file);
 }
+
+// ============================================================
+// UPSAMPLING — NEAREST-NEIGHBOR
+// ============================================================
+/*
+============================================================================
+PARA O RELATÓRIO: NEAREST-NEIGHBOR (Vizinho Mais Próximo)
+
+Funcionamento Detalhado:
+    O algoritmo percorre cada pixel (i, j) da imagem AMPLIADA e mapeia sua
+    posição de volta para a imagem REDUZIDA usando divisão inteira.
+
+    A fórmula do mapeamento é:
+        src_i = (i * img_reduzida->altura) / altura_original
+        src_j = (j * img_reduzida->largura) / largura_original
+
+    Usando multiplicação antes da divisão para manter a proporcionalidade
+    mesmo quando o fator não é exato (ex: de 100px para 256px).
+
+    O resultado é que um bloco de pixels na imagem ampliada recebe exatamente
+    o mesmo valor, criando o característico efeito "pixelizado" ou de blocos
+    quadrados visíveis — especialmente em fatores grandes como 8x ou 16x.
+
+Exemplo com fator 2 e imagem 4x4 → 8x8:
+    Pixel (0,0) na saída → src (0,0)
+    Pixel (1,0) na saída → src (0,0)  [mesmo bloco]
+    Pixel (2,0) na saída → src (1,0)  [próximo bloco]
+============================================================================
+*/
+Image *upsampling_nearest_neighbor(Image *img_reduzida, int largura_original, int altura_original)
+{
+    if (!img_reduzida || largura_original <= 0 || altura_original <= 0)
+        return NULL;
+
+    Image *saida = (Image *)malloc(sizeof(Image));
+    if (!saida)
+        return NULL;
+
+    saida->largura = largura_original;
+    saida->altura = altura_original;
+    saida->max_val = img_reduzida->max_val;
+    saida->canais = img_reduzida->canais;
+    saida->pixels = alocar_pixels(largura_original, altura_original, img_reduzida->canais);
+
+    if (!saida->pixels)
+    {
+        free(saida);
+        return NULL;
+    }
+
+    for (int i = 0; i < altura_original; i++)
+    {
+        for (int j = 0; j < largura_original; j++)
+        {
+            // Mapeia pixel da saída para o vizinho mais próximo na imagem reduzida
+            int src_i = (i * img_reduzida->altura) / altura_original;
+            int src_j = (j * img_reduzida->largura) / largura_original;
+
+            for (int c = 0; c < img_reduzida->canais; c++)
+            {
+                saida->pixels[i][j * img_reduzida->canais + c] =
+                    img_reduzida->pixels[src_i][src_j * img_reduzida->canais + c];
+            }
+        }
+    }
+
+    return saida;
+}
+
+// ============================================================
+// UPSAMPLING — BILINEAR
+// ============================================================
+/*
+============================================================================
+PARA O RELATÓRIO: INTERPOLAÇÃO BILINEAR
+
+Funcionamento Detalhado:
+    A interpolação bilinear é uma extensão da interpolação linear para 2
+    dimensões. Para cada pixel (i, j) da imagem ampliada:
+
+    1. Calcula a posição FRACIONÁRIA correspondente na imagem reduzida:
+           pos_y = i * (altura_reduzida - 1) / (altura_original - 1)
+           pos_x = j * (largura_reduzida - 1) / (largura_original - 1)
+
+    2. Determina os 4 pixels vizinhos na imagem reduzida:
+           (y0, x0) = floor(pos_y), floor(pos_x)  → vizinho superior-esquerdo
+           (y0, x1)                                → vizinho superior-direito
+           (y1, x0)                                → vizinho inferior-esquerdo
+           (y1, x1)                                → vizinho inferior-direito
+
+    3. Calcula os pesos fracionários:
+           dy = pos_y - y0  (quanto estamos "abaixo" do vizinho superior)
+           dx = pos_x - x0  (quanto estamos "à direita" do vizinho esquerdo)
+
+    4. Interpola usando os 4 vizinhos com a fórmula bilinear:
+           valor = (1-dy) * [(1-dx)*P(y0,x0) + dx*P(y0,x1)]
+                 +    dy  * [(1-dx)*P(y1,x0) + dx*P(y1,x1)]
+
+    Geometricamente, é como se calculássemos primeiro a interpolação
+    linear horizontal entre os dois pares de pixels, e depois a
+    interpolação vertical entre os dois resultados.
+
+Tratamento de Borda:
+    O índice x1 e y1 são limitados (clamped) à dimensão máxima da imagem
+    reduzida menos 1, garantindo que acessos nas bordas direita e inferior
+    da imagem ampliada não causem acesso fora dos limites do array.
+============================================================================
+*/
+Image *upsampling_bilinear(Image *img_reduzida, int largura_original, int altura_original)
+{
+    if (!img_reduzida || largura_original <= 0 || altura_original <= 0)
+        return NULL;
+
+    Image *saida = (Image *)malloc(sizeof(Image));
+    if (!saida)
+        return NULL;
+
+    saida->largura = largura_original;
+    saida->altura = altura_original;
+    saida->max_val = img_reduzida->max_val;
+    saida->canais = img_reduzida->canais;
+    saida->pixels = alocar_pixels(largura_original, altura_original, img_reduzida->canais);
+
+    if (!saida->pixels)
+    {
+        free(saida);
+        return NULL;
+    }
+
+    int h_red = img_reduzida->altura;
+    int w_red = img_reduzida->largura;
+
+    for (int i = 0; i < altura_original; i++)
+    {
+        for (int j = 0; j < largura_original; j++)
+        {
+            // Posição fracionária na imagem reduzida
+            double pos_y = (double)i * (h_red - 1) / (altura_original - 1);
+            double pos_x = (double)j * (w_red - 1) / (largura_original - 1);
+
+            // Coordenadas dos 4 vizinhos (com clamp para as bordas)
+            int y0 = (int)pos_y;
+            int x0 = (int)pos_x;
+            int y1 = (y0 + 1 < h_red) ? y0 + 1 : y0;
+            int x1 = (x0 + 1 < w_red) ? x0 + 1 : x0;
+
+            // Pesos fracionários (distância até o vizinho superior-esquerdo)
+            double dy = pos_y - y0;
+            double dx = pos_x - x0;
+
+            for (int c = 0; c < img_reduzida->canais; c++)
+            {
+                // Valores dos 4 vizinhos
+                double p00 = img_reduzida->pixels[y0][x0 * img_reduzida->canais + c];
+                double p01 = img_reduzida->pixels[y0][x1 * img_reduzida->canais + c];
+                double p10 = img_reduzida->pixels[y1][x0 * img_reduzida->canais + c];
+                double p11 = img_reduzida->pixels[y1][x1 * img_reduzida->canais + c];
+
+                // Fórmula bilinear: interpolação horizontal + vertical
+                double valor = (1.0 - dy) * ((1.0 - dx) * p00 + dx * p01)
+                             +        dy  * ((1.0 - dx) * p10 + dx * p11);
+
+                saida->pixels[i][j * img_reduzida->canais + c] = (unsigned char)(valor + 0.5);
+            }
+        }
+    }
+
+    return saida;
+}

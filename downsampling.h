@@ -43,4 +43,41 @@ void liberar_imagem(Image *img);
 Image *ler_imagem(const char *filename);
 void escrever_imagem(const char *filename, Image *img);
 
+/*
+============================================================================
+PARA O RELATÓRIO: ALGORITMOS DE RECONSTITUIÇÃO (Upsampling / Interpolação)
+
+A reconstituição tenta "adivinhar" os pixels perdidos durante o downsampling.
+Como a informação foi descartada, há sempre uma perda residual — o que
+caracteriza a compactação com perda (lossy compression).
+
+1. NEAREST-NEIGHBOR (Vizinho Mais Próximo):
+   - Estratégia: Cada pixel da imagem ampliada copia o valor do pixel mais
+     próximo na imagem reduzida (mapeamento direto via divisão inteira).
+   - Complexidade: O(n) onde n = pixels da imagem de saída.
+   - Artefatos visuais: Blocagem (efeito de "pixelização"), bordas serrilhadas.
+   - Vantagem: Muito rápido, preserva valores exatos dos pixels originais.
+
+2. BILINEAR (Interpolação Bilinear):
+   - Estratégia: Cada pixel da imagem ampliada é calculado como uma média
+     ponderada de seus 4 vizinhos mais próximos na imagem reduzida, com
+     pesos proporcionais à distância fracionária até cada vizinho.
+   - Complexidade: O(n) onde n = pixels da imagem de saída (constante de 4
+     acessos por pixel).
+   - Artefatos visuais: Borramento (blur) nas bordas e detalhes finos.
+   - Vantagem: Transições suaves entre regiões, resultado visualmente superior
+     ao nearest-neighbor na maioria dos casos.
+============================================================================
+*/
+
+// ============================================================
+// FUNÇÕES DE UPSAMPLING (Reconstituição)
+// ============================================================
+
+// Amplia a imagem replicando o pixel mais próximo (sem interpolação)
+Image *upsampling_nearest_neighbor(Image *img_reduzida, int largura_original, int altura_original);
+
+// Amplia a imagem com interpolação bilinear (média ponderada de 4 vizinhos)
+Image *upsampling_bilinear(Image *img_reduzida, int largura_original, int altura_original);
+
 #endif
