@@ -80,9 +80,7 @@ Image *upsampling_nearest_neighbor(Image *img_reduzida, int largura_original, in
 // Amplia a imagem com interpolação bilinear (média ponderada de 4 vizinhos)
 Image *upsampling_bilinear(Image *img_reduzida, int largura_original, int altura_original);
 
-// ============================================================
 // FUNÇÕES DE MÉTRICAS E QUALIDADE
-// ============================================================
 int tamanho_arquivo(const char *caminho);
 void calcular_taxa(const char *caminho_original, const char *caminho_compactado);
 float calcular_mse(Image *original, Image *reconstituida);
