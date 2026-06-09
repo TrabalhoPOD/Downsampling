@@ -44,9 +44,37 @@ Image *ler_imagem(const char *filename);
 void escrever_imagem(const char *filename, Image *img);
 
 // ============================================================
-// FUNÇÃO DE DOWNSAMPLING (Compactação) — aguardando o passo 2
-// Reduz a imagem aplicando média dos pixels em blocos NxN
-// ============================================================
+// FUNÇÃO DE DOWNSAMPLING (Compactação) 
+/* Ideia Principal:
+    A função downsample() implementa uma técnica de compactação com perda
+    (lossy compression) baseada na redução da resolução da imagem.
+    O processo consiste em dividir a imagem original em blocos quadrados
+    de tamanho fator x fator e substituir cada bloco por um único pixel,
+    cujo valor é calculado pela média dos pixels pertencentes ao bloco.
+    Estruturas de Dados Utilizadas:
+    A função utiliza a estrutura Image para representar a imagem e uma
+    matriz dinâmica de pixels armazenada por meio de ponteiros. O acesso aos
+    canais de cor é realizado individualmente, permitindo o processamento
+    tanto de imagens PGM (1 canal) quanto PPM (3 canais).
+
+Complexidade Computacional:
+    Seja W a largura, H a altura da imagem original e F o fator de redução.
+    Cada pixel da imagem original é visitado aproximadamente uma única vez
+    durante o processo de cálculo das médias. Dessa forma, a complexidade
+    temporal é O(W × H).
+
+Vantagens:
+    - Redução significativa do tamanho da imagem.
+    - Implementação simples e eficiente.
+    - Preserva características gerais da imagem.
+    - Trata corretamente as bordas sem descartar pixels.
+
+Desvantagens:
+    - O processo é irreversível, pois informações são perdidas durante a
+      compactação.
+    - Detalhes finos e bordas podem ser suavizados devido ao cálculo das
+      médias.
+*/// ============================================================
 Image *downsample(Image *original, int fator);
 
 /*

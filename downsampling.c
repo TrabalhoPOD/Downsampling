@@ -323,6 +323,90 @@ void exibir_qualidade(Image *original, Image *reconstituida)
     printf("===================================\n\n");
 }
 
+
+// ============================================================
+// DOWNSAMPLING 
+// ============================================================
+/*
+============================================================================
+PARA O RELATÓRIO: 
+
+Funcionamento Detalhado:
+    Inicialmente é criada uma nova imagem com dimensões reduzidas. A largura
+    e a altura são calculadas utilizando divisão inteira arredondada para
+    cima, para que todos os pixels da imagem original sejam
+    considerados (bordas sao desconsideradas sem isso).
+
+    Em seguida, a função percorre cada posição da imagem reduzida. Para cada
+    pixel da nova imagem, é identificado o bloco correspondente na imagem
+    original. Todos os pixels desse bloco são somados separadamente para
+    cada canal de cor (tons de cinza ou RGB).
+
+    Durante a soma, é realizada uma verificação de limites para garantir que
+    apenas pixels válidos da imagem original sejam considerados. Essa etapa
+    é necessária para tratar corretamente blocos localizados nas bordas da
+    imagem, que podem possuir menos pixels do que o tamanho completo do
+    bloco fator x fator.
+
+    Após a soma, é calculada a média dos valores encontrados dividindo-se a
+    soma pela quantidade real de pixels processados. O resultado é armazenado
+    no pixel correspondente da imagem reduzida.
+    
+============================================================================
+*/
+Image *downsample(Image *original, int fator)
+{
+    if (original == NULL || fator <= 1)
+        return NULL;
+
+    Image *reduzida = malloc(sizeof(Image));
+
+    reduzida->largura = (original->largura + fator - 1) / fator; //altura e largura sao arredondadas para cima
+    reduzida->altura  = (original->altura + fator - 1) / fator;  //para garantir que todos os pixels da imagem 
+    reduzida->max_val = original->max_val;                       //original sao aproveitados   
+    reduzida->canais = original->canais;
+
+    reduzida->pixels = alocar_pixels(
+        reduzida->largura,
+        reduzida->altura,
+        reduzida->canais
+    );
+
+    //os tres primeiros for percorrem todos os canais dentro dos pixels da imagem reduzida
+    for (int y = 0; y < reduzida->altura; y++)
+    {
+        for (int x = 0; x < reduzida->largura; x++)
+        {
+            for (int c = 0; c < reduzida->canais; c++)
+            {   
+                int soma = 0;
+                int quantidade = 0;
+
+                //percorrendo o bloco fator x fator
+                for (int dy = 0; dy < fator; dy++)
+                {
+                    for (int dx = 0; dx < fator; dx++)
+                    {   
+                        // mapeamento na dos pixels equivalentes na imagem original
+                        int origem_y = y * fator + dy;
+                        int origem_x = x * fator + dx;
+
+                        // verificando se o pixel existe na imagem original
+                        if (origem_y < original->altura && origem_x < original->largura)
+                        {
+                            soma += original->pixels[origem_y][origem_x * original->canais + c];
+                            quantidade++;
+                        }
+                    }
+                }
+                reduzida->pixels[y][x * reduzida->canais + c] = soma / quantidade;
+            }
+        }
+    }
+    return reduzida;
+}
+
+
 // ============================================================
 // UPSAMPLING — NEAREST-NEIGHBOR
 // ============================================================

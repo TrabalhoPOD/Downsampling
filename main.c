@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     printf("Imagem original: %dx%d  canais=%d\n",
            original->largura, original->altura, original->canais);
 
-    /* ---- 3. Downsampling (Espera ate o passo 2) ---- */
+    /* ---- 3. Downsampling  ---- */
     Image *reduzida = downsample(original, fator);
     if (!reduzida)
     {
