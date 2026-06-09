@@ -209,9 +209,13 @@ void escrever_imagem(const char *filename, Image *img)
     fclose(file);
 }
 
-int tamanho_arquivo(const char *caminho){
+//metricas
+
+int tamanho_arquivo(const char *caminho)
+{
     FILE *f = fopen(caminho, "rb");
-    if (!f){
+    if (!f)
+    {
         printf("Erro ao abrir arquivo \n");
         return -1;
     }
@@ -221,13 +225,17 @@ int tamanho_arquivo(const char *caminho){
     return tamanho;
 }
 
-void calcular_taxa(const char *caminho_original, const char *caminho_compactado) {
+void calcular_taxa(const char *caminho_original, const char *caminho_compactado)
+{
     int original   = tamanho_arquivo(caminho_original);
     int compactado = tamanho_arquivo(caminho_compactado);
 
-    if (original < 0 || compactado < 0) return;
+    if (original < 0 || compactado < 0)
+    {
+        return;
+    }
 
-    float taxa = (1.0 - (float)original / (float)compactado) * 100.0;
+    float taxa = (1.0 - (float)compactado / (float)original) * 100.0;
 
     printf("\n=== Metricas===\n");
     printf("Tamanho original:    %d bytes\n", original);
@@ -235,20 +243,27 @@ void calcular_taxa(const char *caminho_original, const char *caminho_compactado)
     printf("Taxa de compactacao: %.2f%%\n", taxa);
 
     if (taxa < 0)
+    {
         printf("Arquivo reduzoiu %.2f%%\n", -taxa);
+    }
     else
+    {
         printf("Arquivo aumentou %.2f%%\n", taxa);
+    }
 
     printf("===============================\n\n");
 }
 
-float calcular_mse(Image *original, Image *reconstituida) {
+float calcular_mse(Image *original, Image *reconstituida)
+{
     float soma = 0.0;
     int total = original->largura * original->altura * original->canais;
 
-    for (int i = 0; i < original->altura; i++) {
+    for (int i = 0; i < original->altura; i++)
+    {
         int cols = original->largura * original->canais;
-        for (int j = 0; j < cols; j++) {
+        for (int j = 0; j < cols; j++)
+        {
             float diff = (float)original->pixels[i][j] - (float)reconstituida->pixels[i][j];
             soma += diff * diff;
         }
@@ -257,13 +272,17 @@ float calcular_mse(Image *original, Image *reconstituida) {
     return soma / total;
 }
 
-float calcular_psnr(float mse) {
+float calcular_psnr(float mse)
+{
     if (mse == 0.0)
+    {
         return -1.0;
+    }
     return 10.0 * log10((255.0 * 255.0) / mse);
 }
 
-void exibir_qualidade(Image *original, Image *reconstituida) {
+void exibir_qualidade(Image *original, Image *reconstituida)
+{
     float mse  = calcular_mse(original, reconstituida);
     float psnr = calcular_psnr(mse);
 
@@ -271,16 +290,35 @@ void exibir_qualidade(Image *original, Image *reconstituida) {
     printf("MSE:  %.4f\n", mse);
 
     if (psnr < 0)
+    {
         printf("PSNR: imagens identicas\n");
+    }
     else
+    {
         printf("PSNR: %.2f dB\n", psnr);
+    }
 
     printf("Interpretacao: ");
-    if      (psnr < 0)   printf("Imagens identicas.\n");
-    else if (psnr >= 40) printf("Excelente.\n");
-    else if (psnr >= 30) printf("Boa qualidade.\n");
-    else if (psnr >= 20) printf("Qualidade aceitavel.\n");
-    else                 printf("Baixa qualidade.\n");
+    if (psnr < 0)
+    {
+        printf("Imagens identicas.\n");
+    }
+    else if (psnr >= 40)
+    {
+        printf("Excelente.\n");
+    }
+    else if (psnr >= 30)
+    {
+        printf("Boa qualidade.\n");
+    }
+    else if (psnr >= 20)
+    {
+        printf("Qualidade aceitavel.\n");
+    }
+    else
+    {
+        printf("Baixa qualidade.\n");
+    }
 
     printf("===================================\n\n");
 }
